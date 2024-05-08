@@ -1,0 +1,8 @@
+{
+    "name": "cpp-example",
+    "dependencies": [
+        "cxxopts",
+        "fmt",
+        "range-v3"
+    ]
+}
