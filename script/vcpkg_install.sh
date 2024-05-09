@@ -14,5 +14,5 @@ if [ -f "./vcpkg/vcpkg" ]; then
     echo "vcpkg already installed"
 else
     echo "vcpkg not installed, bootstraping..."
-    ./vcpkg/bootstrap-vcpkg.sh
+    sh ../vcpkg/bootstrap-vcpkg.sh
 fi
