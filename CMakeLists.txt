@@ -4,16 +4,14 @@ project("chat-server")
 set(CMAKE_CXX_STANDARD 17)
 set(SRC ${PROJECT_SOURCE_DIR}/src/main.cpp)
 
-
-find_package(fmt CONFIG REQUIRED)
-find_package(range-v3 REQUIRED)
-find_package(cxxopts REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system type_traits)
+find_package(asio CONFIG REQUIRED)
+#find_package(Boost REQUIRED COMPONENTS random)
+find_package(websocketpp CONFIG REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
 add_executable(${PROJECT_NAME} ${SRC})
-target_link_libraries(${PROJECT_NAME}
-  PRIVATE
-    fmt::fmt
-    range-v3::range-v3
-    cxxopts::cxxopts)
 
+# Remove the pthread dependency
+# set(LIB pthread)  
 
-
+target_link_libraries(${PROJECT_NAME} PRIVATE websocketpp::websocketpp asio asio::asio ${Boost_LIBRARIES})
