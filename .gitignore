@@ -4,4 +4,4 @@ build/
 .DS_Store
 CMakeFiles/
 cmake_output.txt
-CON
+bin/
