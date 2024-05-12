@@ -1,7 +1,6 @@
-version: '2.1'
-
 services:
   dev:
+    platform: linux/amd64
     build: .
     volumes:
       - .:/chatserver
@@ -9,16 +8,16 @@ services:
     tty: true
     stdin_open: true
 
-
   server:
+    platform: linux/amd64
     build: .
     volumes:
       - .:/chatserver
-    command: ./bin/server 
-    
+    command: ./bin/server
 
   client:
+    platform: linux/amd64
     build: .
     volumes:
       - .:/chatserver
-    command: ./bin/client  
+    command: ./bin/client

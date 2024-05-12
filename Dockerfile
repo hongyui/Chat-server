@@ -1,12 +1,12 @@
-FROM ubuntu:latest
+FROM amd64/ubuntu
 
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 # 安装基本工具
 RUN apt-get update
-RUN apt install -y git curl wget vim gdb gnupg software-properties-common build-essential zip unzip tar pkg-config && rm -rf /var/lib/apt/lists/*
-RUN apt install -y g++ gcc
+RUN apt install -y git curl wget vim gdb gnupg software-properties-common build-essential zip unzip tar pkg-config ninja-build && rm -rf /var/lib/apt/lists/*
+# RUN apt install -y g++ gcc
 ENV CMAKE_CXX_COMPILER=/usr/bin/g++
 ENV CMAKE_C_COMPILER=/usr/bin/gcc
 ENV CC=gcc
@@ -17,7 +17,7 @@ RUN apt-get update
 RUN apt install -y cmake
 
 # 安装 Vcpkg
-RUN git clone https://github.com/Microsoft/vcpkg.git /chatserver/vcpkg
+RUN git clone https://github.com/Microsoft/vcpkg /chatserver/vcpkg
 RUN /chatserver/vcpkg/bootstrap-vcpkg.sh
 
 # 設定Vcpkg路徑
