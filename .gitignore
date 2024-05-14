@@ -4,5 +4,4 @@ build/*
 .DS_Store
 CMakeFiles/
 cmake_output.txt
-bin/*
 vcpkg/
