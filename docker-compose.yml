@@ -1,0 +1,23 @@
+services:
+  dev:
+    platform: linux/amd64
+    build: .
+    volumes:
+      - .:/chatserver
+    command: /bin/bash
+    tty: true
+    stdin_open: true
+
+  server:
+    platform: linux/amd64
+    build: .
+    volumes:
+      - .:/chatserver
+    command: ./bin/server
+
+  client:
+    platform: linux/amd64
+    build: .
+    volumes:
+      - .:/chatserver
+    command: ./bin/client

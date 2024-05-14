@@ -1,5 +1,7 @@
-build/
+build/*
 
 .vscode/
 .DS_Store
 CMakeFiles/
+cmake_output.txt
+vcpkg/
