@@ -1,3 +1,4 @@
+version: '3'
 services:
   dev:
     platform: linux/amd64
@@ -13,7 +14,15 @@ services:
     build: .
     volumes:
       - .:/chatserver
-    command: ./bin/server
+    command: ./bin/server 9002
+    environment:
+      - PORT=9002
+    deploy:
+      replicas: 3
+    ports:
+      - "9002-9004:9002"
+    networks:
+      - websocket_net
 
   client:
     platform: linux/amd64
@@ -21,3 +30,8 @@ services:
     volumes:
       - .:/chatserver
     command: ./bin/client
+    networks:
+      - websocket_net
+networks:
+  websocket_net:
+    driver: bridge

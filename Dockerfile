@@ -22,5 +22,7 @@ ENV CMAKE_TOOLCHAIN_FILE=/chatserver/vcpkg/scripts/buildsystems/vcpkg.cmake
 WORKDIR /chatserver
 RUN git config --global core.autocrlf false
 
+EXPOSE 9002
+
 # 容器啟動時新增終端機
 CMD ["CMD"]
