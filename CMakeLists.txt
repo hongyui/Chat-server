@@ -19,6 +19,9 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 find_package(Boost REQUIRED COMPONENTS system type_traits)
 find_package(asio CONFIG REQUIRED)
 find_package(websocketpp CONFIG REQUIRED)
+find_package(unofficial-libmariadb CONFIG REQUIRED)
+find_package(nlohmann_json REQUIRED)
+
 
 # 設定Boost的依賴庫
 include_directories(${Boost_INCLUDE_DIRS})

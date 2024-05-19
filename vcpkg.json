@@ -1,9 +1,0 @@
-{
-    "name": "cpp-example",
-    "dependencies": [
-        "boost-random",
-        "websocketpp",
-        "asio",
-        "boost-type-traits"
-    ]
-}
