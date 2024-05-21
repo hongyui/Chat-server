@@ -68,24 +68,41 @@
 
 ## MySQL 操作
 
-1. 查詢所有資料庫
+1. 登入資料庫
+
+```bash!
+    mysql -u root -p database_name
+```
+
+
+2. 查詢所有資料庫
 
 ```bash!
     SHOW DATABASES;
 ```
 
-2. 使用資料庫
+3. 使用資料庫
 
 ```bash!
     USE database_name;
 ```
 
-3. 查詢資料庫中的所有資料表
+4. 查詢資料庫中的所有資料表
 
 ```bash!
     SHOW TABLES;
 ```
+5. 查詢 `users` 資料表所有的內容
 
+```bash!
+    SELECT * FROM users;
+```
+
+6. 刪除 `users` 資料表
+
+```bash!
+    DROP TABLE users;
+```
 
 ## 關閉開發環境
 
