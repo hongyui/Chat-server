@@ -1,3 +1,4 @@
+
 services:
   dev:
     platform: linux/amd64
@@ -7,6 +8,8 @@ services:
     command: /bin/bash
     tty: true
     stdin_open: true
+    depends_on:
+      - database
 
   server:
     platform: linux/amd64
@@ -14,6 +17,8 @@ services:
     volumes:
       - .:/chatserver
     command: ./bin/server
+    depends_on:
+      - database
 
   client:
     platform: linux/amd64
@@ -21,3 +26,13 @@ services:
     volumes:
       - .:/chatserver
     command: ./bin/client
+    
+  database: 
+    platform: linux/amd64
+    image: mariadb:lts
+    container_name: db
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+      MARIADB_DATABASE: ${DATABASE_NAME}
+    ports:
+      - "3306:3306"
