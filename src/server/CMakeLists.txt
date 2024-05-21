@@ -5,4 +5,4 @@ aux_source_directory(. SERVER_SRC)
 add_executable(server ${SERVER_SRC})
 
 # 連結套件庫到server端
-target_link_libraries(server PRIVATE websocketpp::websocketpp asio asio::asio ${Boost_LIBRARIES})
+target_link_libraries(server PRIVATE websocketpp::websocketpp asio asio::asio unofficial::libmariadb ${Boost_LIBRARIES})

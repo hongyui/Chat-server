@@ -4,4 +4,4 @@ aux_source_directory(. CLIENT_SRC)
 add_executable(client ${CLIENT_SRC})
 
 # 連結套件庫到client端
-target_link_libraries(client PRIVATE websocketpp::websocketpp asio asio::asio ${Boost_LIBRARIES})
+target_link_libraries(client PRIVATE websocketpp::websocketpp asio asio::asio unofficial::libmariadb ${Boost_LIBRARIES})
