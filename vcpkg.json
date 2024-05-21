@@ -4,6 +4,8 @@
         "boost-random",
         "websocketpp",
         "asio",
-        "boost-type-traits"
+        "boost-type-traits",
+        "libmariadb",
+        "nlohmann-json"
     ]
 }
