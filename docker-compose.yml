@@ -10,6 +10,8 @@ services:
     stdin_open: true
     depends_on:
       - database
+    networks:
+      - chatserver
 
   server:
     platform: linux/amd64
@@ -19,6 +21,10 @@ services:
     command: ./bin/server
     depends_on:
       - database
+      - auth-server
+    networks:
+      - chatserver
+      - sql
 
   client:
     platform: linux/amd64
@@ -26,6 +32,8 @@ services:
     volumes:
       - .:/chatserver
     command: ./bin/client
+    networks:
+      - chatserver
     
   database: 
     platform: linux/amd64
@@ -36,3 +44,25 @@ services:
       MARIADB_DATABASE: ${DATABASE_NAME}
     ports:
       - "3306:3306"
+    networks:
+      - sql
+    
+  auth-server:
+    platform: linux/amd64
+    build: .
+    volumes:
+      - .:/chatserver
+    command: ./bin/auth
+    depends_on:
+      - database
+    ports:
+      - "8080:8080"
+    networks:
+      - chatserver
+      - sql
+
+networks:
+  chatserver:
+    driver: bridge
+  sql:
+    driver: bridge
