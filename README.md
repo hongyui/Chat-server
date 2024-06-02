@@ -71,7 +71,7 @@
 1. 登入資料庫
 
 ```bash!
-    mysql -u root -p database_name
+    mariadb -u root -p database_name
 ```
 
 
