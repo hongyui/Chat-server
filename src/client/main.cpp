@@ -9,6 +9,15 @@
 using boost::asio::ip::tcp;
 using json = nlohmann::json;
 
+void clearScreen()
+{
+#ifdef _WIN32
+    system("cls");
+#else
+    system("clear");
+#endif
+}
+
 std::atomic<bool> running(true); // 用於控制線程運行狀態
 // bool logged_in = false;
 json account_json = {
@@ -184,9 +193,9 @@ void receive_messages(tcp::socket &socket, json &account_json)
 //     }
 // }
 
-void send_messages(tcp::socket &socket, json &account_json, json &message_json, std::string server_ip)
+void send_messages(tcp::socket &socket, json &account_json, json &message_json, std::string server_ip, bool &restart)
 {
-    //std::cout << account_json["ip"] << account_json["port"] << std::endl;
+    // std::cout << account_json["ip"] << account_json["port"] << std::endl;
     std::string username = account_json["username"];
     try
     {
@@ -197,8 +206,9 @@ void send_messages(tcp::socket &socket, json &account_json, json &message_json, 
             std::getline(std::cin, message);
 
             if (message.empty())
-                continue; // 忽略空輸入
-            std::cout << "\r\033[K";
+                continue;                 // 忽略空輸入
+            std::cout << "\033[A\033[2K"; // 上移一行並清除行內容
+            // std::cout << "\r\033[K";
             if (message[0] == '!')
             {
                 if (message == "!help")
@@ -208,7 +218,40 @@ void send_messages(tcp::socket &socket, json &account_json, json &message_json, 
                 else if (message == "!exit")
                 {
                     running = false;
-                    return;
+                    socket.close();
+                    break;
+                }
+                else if (message == "!history")
+                {
+                    std::cout << "請輸入要查詢的帳號：";
+                    std::string target;
+                    std::getline(std::cin >> std::ws, target);
+                    message_json = {
+                        {"type", "history"},
+                        {"username", target},
+                        {"ip", server_ip},
+                        {"port", "8080"}};
+                    boost::system::error_code ec;
+                    boost::asio::write(socket, boost::asio::buffer(message_json.dump() + "\n"), ec);
+                    if (ec)
+                    {
+                        std::cerr << "發送訊息時出錯: " << ec.message() << std::endl;
+                    }
+                }
+                else if (message == "!online")
+                {
+                    message_json = {
+                        {"type", "online"},
+                        {"username", username},
+                        {"message", message},
+                        {"ip", server_ip},
+                        {"port", "8080"}};
+                    boost::system::error_code ec;
+                    boost::asio::write(socket, boost::asio::buffer(message_json.dump() + "\n"), ec);
+                    if (ec)
+                    {
+                        std::cerr << "發送訊息時出錯: " << ec.message() << std::endl;
+                    }
                 }
                 else
                 {
@@ -280,6 +323,7 @@ int main()
     const int PORT = 8080;
     while (true)
     {
+        bool restart = false;
         try
         {
             boost::asio::io_context io_context_auth;
@@ -298,7 +342,7 @@ int main()
                 std::cout << GREEN << "已連線至伺服器 " << server_ip << " 的埠 " << PORT << RESET << std::endl;
                 running = true;
                 std::thread receive_thread(receive_messages, std::ref(socket), std::ref(account_json));
-                std::thread send_thread(send_messages, std::ref(socket), std::ref(account_json), std::ref(message_json),std::ref(server_ip));
+                std::thread send_thread(send_messages, std::ref(socket), std::ref(account_json), std::ref(message_json), std::ref(server_ip), std::ref(restart));
                 send_thread.join();
                 running = false; // 結束接收訊息線程
                 socket.close();  // 關閉 socket 以觸發異常結束接收線程

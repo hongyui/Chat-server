@@ -64,6 +64,27 @@ void broadcast_message(const std::string &message, tcp::socket *sender_socket)
     }
 }
 
+void send_message(const json history , tcp::socket *sender_socket)
+{
+    for(auto &message : history)
+    {
+
+
+        std::string message_str = message["timestamp"].get<std::string>() + " " + message["message"].get<std::string>();
+        // 定義一個 boost::system::error_code 物件
+        boost::system::error_code ec;
+        // 使用 boost::asio::write() 函數將訊息發送給客戶端
+        boost::asio::write(*sender_socket, boost::asio::buffer(message_str + "\n"), ec);
+
+        // 如果發送訊息時出錯，則輸出錯誤信息
+        if (ec)
+        {
+            std::cerr << "發送訊息給客戶端時出錯: " << ec.message() << std::endl;
+        }
+    }
+
+}
+
 // 執行 SQL 查詢 需傳入參數有 MYSQL 連接和 SQL 查詢語句
 bool execute_query(MYSQL *conn, const std::string &query)
 {
@@ -96,6 +117,37 @@ MYSQL_RES *perform_select_query(MYSQL *conn, const std::string &query)
     // 回傳查詢結果
     return res;
 }
+
+
+json search_message(MYSQL *conn, const std::string &username, const std::string &ip)
+{
+    // SQL 查詢語句
+    std::string search_query = "SELECT timestamp,message FROM messages WHERE username = '"+ username +"' AND ip = '" + ip + "'";
+    // 執行 SQL 查詢語句
+    MYSQL_RES *res = perform_select_query(conn, search_query);
+    // 如果查詢結果為空，則回傳 false
+    if (res == NULL)
+    {
+        return "查無訊息";
+    }
+    // 使用 mysql_num_rows() 函數獲取查詢結果的行數
+    int num_rows = mysql_num_rows(res);
+    // 定義一個 json 物件來儲存查詢結果
+    json result;
+    // 使用 mysql_fetch_row() 函數遍歷查詢結果
+    MYSQL_ROW row;
+    while ((row = mysql_fetch_row(res)))
+    {
+        // 將查詢結果添加到 json 物件中
+        result.push_back({{"timestamp", row[0]}, {"message", row[1]}});
+    }
+    // 釋放查詢結果
+    mysql_free_result(res);
+    // 回傳查詢結果
+    return result;
+}
+
+// 執行 INSERT 查詢 需傳入參數有 MYSQL 連接和 SQL 查詢語句
 
 // 插入訊息 需傳入參數有 MYSQL 連接、使用者名稱和訊息
 bool insert_message(MYSQL *conn, const std::string &username, const std::string &message, const std::string &ip_address)
@@ -152,6 +204,18 @@ void handle_client(tcp::socket socket, MYSQL *conn)
                 }
                 // 廣播訊息給所有已連接的客戶端
                 broadcast_message(full_message, &socket);
+            }else if (type == "history")
+            {
+                // 獲取 JSON 物件中的 username 和 message 屬性
+                std::string username = message_json["username"];
+                std::string ip_address = message_json["ip"];
+                std::string port = message_json["port"];
+                // 使用者名稱和訊息組合成完整的訊息
+                std::string full_ip = ip_address + ":" + port;
+                //std::string history = search_message(conn, username, full_ip);
+                //std::cout << "Received history: " << history << std::endl;
+                // 廣播訊息給所有已連接的客戶端
+                send_message(search_message(conn, username, full_ip), &socket);
             }
         }
     }
