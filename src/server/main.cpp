@@ -5,6 +5,7 @@
 #include <set>
 #include <mutex>
 #include <thread>
+#include <unistd.h>
 
 // 使用 boost::asio::ip::tcp 命名空間
 using boost::asio::ip::tcp;
@@ -82,7 +83,31 @@ void send_message(const json history , tcp::socket *sender_socket)
             std::cerr << "發送訊息給客戶端時出錯: " << ec.message() << std::endl;
         }
     }
-
+}
+void message_init(const json init_message, tcp::socket *sender_socket)
+{   
+    // 使用 for - range 迴圈遍歷所有的客戶端
+    for (auto &messages : init_message)
+    {
+            std::string message_str = messages["username"].get<std::string>() + ": " + messages["message"].get<std::string>();
+            // 定義一個 boost::system::error_code 物件
+            boost::system::error_code ec;
+            // 使用 boost::asio::write() 函數將訊息發送給客戶端
+            boost::asio::write(*sender_socket, boost::asio::buffer(message_str + "\n"), ec);
+            // 如果發送訊息時出錯，則輸出錯誤信息
+            if (ec)
+            {
+                std::cerr << "發送訊息給客戶端時出錯: " << ec.message() << std::endl;
+            }
+            sleep(0.001);
+    }
+    
+    boost::system::error_code ec;
+    boost::asio::write(*sender_socket, boost::asio::buffer("END\n"), ec);
+    if (ec)
+            {
+                std::cerr << "發送訊息給客戶端時出錯: " << ec.message() << std::endl;
+            }
 }
 
 // 執行 SQL 查詢 需傳入參數有 MYSQL 連接和 SQL 查詢語句
@@ -157,6 +182,31 @@ bool insert_message(MYSQL *conn, const std::string &username, const std::string 
     // 執行 SQL 插入語句
     return execute_query(conn, insert_query);
 }
+
+json fetch_messages(MYSQL *conn, const std::string &ip_address,const std::string &port) 
+{
+    std::string fetch_query = "SELECT username,message FROM messages WHERE ip = '" + ip_address +":" + port + "'";
+    MYSQL_RES *res = perform_select_query(conn, fetch_query);
+    //如果查無訊息，回傳"查無訊息"
+    if(res==NULL)
+    {
+        return "查無訊息";
+    }
+
+    json init_message_logs;  // 創建JSON對象以存儲消息
+    MYSQL_ROW row;
+    while ((row = mysql_fetch_row(res))) {  // 跌代每一行查詢結果
+        json init_message_log;  // 創建JSON對象以存儲單條消息
+        init_message_log["username"] = row[0];  // 設置用戶名
+        init_message_log["message"] = row[1];   // 設置消息內容
+        init_message_logs.push_back(init_message_log);  // 將消息添加到消息列表中
+    }
+     // 釋放查詢結果資源
+    mysql_free_result(res);
+
+    return init_message_logs;  // 返回消息 JSON 數組
+}
+
 // 處理客戶端 需傳入參數有客戶端的 socket 和 MYSQL 連接
 void handle_client(tcp::socket socket, MYSQL *conn)
 {
@@ -165,6 +215,7 @@ void handle_client(tcp::socket socket, MYSQL *conn)
     {
         std::lock_guard<std::mutex> lock(clients_mutex);
         clients.insert(&socket);
+        
     }
 
     try
@@ -216,6 +267,18 @@ void handle_client(tcp::socket socket, MYSQL *conn)
                 //std::cout << "Received history: " << history << std::endl;
                 // 廣播訊息給所有已連接的客戶端
                 send_message(search_message(conn, username, full_ip), &socket);
+            }
+            else if(type == "fetch")
+            {
+                //獲取json中的IP和PORT的屬性
+                std::string ip_history = message_json["ip"];
+                std::string port = message_json["port"];
+                //獲取訊息紀錄
+                json message_logs = fetch_messages(conn,ip_history,port);
+                message_init(message_logs,&socket);
+                // 將消息記錄發送給請求的客戶端
+                // std::string response = message_logs.dump() + "\n";
+                // boost::asio::write(socket, boost::asio::buffer(response));
             }
         }
     }

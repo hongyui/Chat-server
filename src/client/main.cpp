@@ -18,6 +18,7 @@ void clearScreen()
 #endif
 }
 
+void send_fetch(tcp::socket &socket, const std::string &username, const std::string &server_ip);
 std::atomic<bool> running(true); // 用於控制線程運行狀態
 // bool logged_in = false;
 json account_json = {
@@ -195,7 +196,6 @@ void receive_messages(tcp::socket &socket, json &account_json)
 
 void send_messages(tcp::socket &socket, json &account_json, json &message_json, std::string server_ip, bool &restart)
 {
-    // std::cout << account_json["ip"] << account_json["port"] << std::endl;
     std::string username = account_json["username"];
     try
     {
@@ -314,6 +314,23 @@ void server_init(tcp::socket &socket, boost::asio::io_context &io_context, bool 
         }
     }
 }
+void send_fetch(tcp::socket &socket, const std::string &username, const std::string &server_ip)
+{
+
+    json fetch_request = {
+        {"type", "fetch"},
+        {"username", username},
+        {"ip", server_ip},
+        {"port", "8080"}};
+
+    boost::system::error_code ec;
+    boost::asio::write(socket, boost::asio::buffer(fetch_request.dump() + "\n"), ec);
+    if (ec)
+    {
+        std::cerr << "發送訊息時出錯: " << ec.message() << std::endl;
+    }
+}
+
 int main()
 {
     const std::string GREEN = "\033[32m";
@@ -341,6 +358,14 @@ int main()
             {
                 std::cout << GREEN << "已連線至伺服器 " << server_ip << " 的埠 " << PORT << RESET << std::endl;
                 running = true;
+                std::string response = "START";
+                send_fetch(socket, account_json["username"], server_ip);
+                while (response != "END")
+                {
+                    response = receive_response(socket);
+                    if (response != "END")
+                        std::cout << response << std::endl;
+                }
                 std::thread receive_thread(receive_messages, std::ref(socket), std::ref(account_json));
                 std::thread send_thread(send_messages, std::ref(socket), std::ref(account_json), std::ref(message_json), std::ref(server_ip), std::ref(restart));
                 send_thread.join();
