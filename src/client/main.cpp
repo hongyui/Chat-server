@@ -5,6 +5,8 @@
 #include <chrono>
 #include <nlohmann/json.hpp>
 #include <atomic>
+#include <cctype>
+#include <algorithm>
 
 using boost::asio::ip::tcp;
 using json = nlohmann::json;
@@ -193,7 +195,11 @@ void receive_messages(tcp::socket &socket, json &account_json)
 //         std::cerr << "接收訊息時發生錯誤: " << e.what() << std::endl;
 //     }
 // }
-
+bool isSpase(const std::string &str)
+{
+    return std::all_of(str.begin(), str.end(), [](char ch)
+                       { return std::isspace(static_cast<unsigned char>(ch)); });
+}
 void send_messages(tcp::socket &socket, json &account_json, json &message_json, std::string server_ip, bool &restart)
 {
     std::string username = account_json["username"];
@@ -205,8 +211,11 @@ void send_messages(tcp::socket &socket, json &account_json, json &message_json, 
             std::string message;
             std::getline(std::cin, message);
 
-            if (message.empty())
-                continue;                 // 忽略空輸入
+            if (message.empty() || isSpase(message))
+            {
+                std::cout << "\033[A\033[2K"; // 上移一行並清除行內容
+                continue;                     // 忽略空輸入
+            }
             std::cout << "\033[A\033[2K"; // 上移一行並清除行內容
             // std::cout << "\r\033[K";
             if (message[0] == '!')
