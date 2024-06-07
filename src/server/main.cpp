@@ -69,14 +69,16 @@ void send_message(const json history, tcp::socket *sender_socket, std::string ty
 {
     std::string message_str;
     boost::system::error_code ec;
-    if (type == "history")
-    {
-        boost::asio::write(*sender_socket, boost::asio::buffer("HISTORY_START\n"), ec);
-        sleep(0.001);
-    }
+    if(history.empty() && type == "history"){
+            message_str = "NO_MESSAGE\n";
+            boost::asio::write(*sender_socket, boost::asio::buffer(message_str + "\n"), ec);
+            sleep(0.01);
+            boost::asio::write(*sender_socket, boost::asio::buffer("END\n"), ec);
+        }
     for (auto &message : history)
     {
         // 判別回傳訊息的類型
+        
         if (type == "history")
         {
             message_str = message["timestamp"].get<std::string>() + " " + message["message"].get<std::string>();
@@ -92,9 +94,13 @@ void send_message(const json history, tcp::socket *sender_socket, std::string ty
         {
             std::cerr << "發送訊息給客戶端時出錯: " << ec.message() << std::endl;
         }
+        sleep(0.01);
+    }
+    if (type == "history" || type == "fetch")
+    {
+        boost::asio::write(*sender_socket, boost::asio::buffer("END\n"), ec);
         sleep(0.001);
     }
-    boost::asio::write(*sender_socket, boost::asio::buffer("END\n"), ec);
     if (ec)
     {
         std::cerr << "發送訊息給客戶端時出錯: " << ec.message() << std::endl;
@@ -263,7 +269,7 @@ void handle_client(tcp::socket socket, MYSQL *conn)
                 // 使用者名稱和訊息組合成完整的訊息
                 std::string full_message = username + ": " + message;
                 std::string full_ip = ip_address + ":" + port;
-                std::cout << "Received message: " << full_message << std::endl;
+                //std::cout << "Received message: " << full_message << std::endl;
 
                 if (!insert_message(conn, username, message, full_ip))
                 {
