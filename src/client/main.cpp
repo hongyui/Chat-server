@@ -334,7 +334,7 @@ void send_messages(tcp::socket &socket, json &account_json, json &message_json, 
 
 bool server_init(tcp::socket &socket, boost::asio::io_context &io_context, bool logged_in)
 {
-    if (!try_connect(socket, auth_ip, 8080, io_context))
+    if (!try_connect(socket, auth_ip, 8081, io_context))
     {
         std::cerr << "\033[31m" << "無法連線至驗證伺服器，請確認連線狀態" << "\033[0m" << std::endl;
         return false;

@@ -12,7 +12,7 @@ using boost::asio::ip::tcp;
 using json = nlohmann::json;
 
 // 定義伺服器的埠號
-const int PORT = 8080;
+const int PORT = 8081;
 // 定義一個 std::set 來存儲所有客戶端的 socket
 std::set<tcp::socket*> clients;
 // 定義一個 std::mutex 來保護 clients 集合
