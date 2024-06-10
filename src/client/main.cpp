@@ -334,9 +334,10 @@ void history_message(tcp::socket &socket, const std::string &username, const std
     while (response != "END") {
         if (response == "NO_MESSAGE") {
             std::cout << "查無歷史訊息\n";
+            continue;
         }
         response = receive_response(socket);
-        if (response != "END" || response != "NO_MESSAGE") {
+        if (response != "END") {
             std::cout << "\033[41m" << response << "\033[0m" << std::endl;
         }
     }
