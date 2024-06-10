@@ -5,6 +5,7 @@
 #include <set>
 #include <mutex>
 #include <thread>
+#include <fstream>
 
 // 使用 boost::asio::ip::tcp 命名空間
 using boost::asio::ip::tcp;
@@ -201,16 +202,44 @@ void handle_client(tcp::socket socket, MYSQL* conn) {
 }
 
 
-int main() {
+// 使用 map 來存儲環境變數 key 和 value 使用 map 是因為 map 會自動按照鍵的順序進行排序也允許動態添加和刪除元素，不需要預先定義大小。
+void load_env(std::map<std::string, std::string> &env)
+{
+    // 打開 .env 文件
+    std::ifstream file(".env");
+    // 宣告一個字串變數來存儲每一行的數據
+    std::string line;
+    // 使用 while 迴圈遍歷文件中的每一行
+    while (std::getline(file, line))
+    {
+        // 使用size_t類型的pos變數來存儲等號的位置 size_t 是一個無符號整數類型，通常用來表示大小或者長度如果沒有找到等號，則返回特殊常數 std::string::npos，表示該字符未找到。
+        size_t pos = line.find('=');
+        // 如果找到等號
+        if (pos != std::string::npos)
+        {
+            // 使用 substr() 函數來截取字符串 substr() 函數的第一個參數是截取的起始位置，第二個參數是截取的長度如果以DATABASE_HOST=database來看，就是從0開始截取到等號的位置
+            std::string key = line.substr(0, pos);
+            // pos + 1 表示從等號的下一個位置開始截取
+            std::string value = line.substr(pos + 1);
+            // 將 key 和 value 添加到 map 中
+            env[key] = value;
+        }
+    }
+}
+int main()
+{
     const std::string GREEN = "\033[32m";
     const std::string RED = "\033[31m";
     const std::string RESET = "\033[0m";
-
+    // 定義一個 map 來存儲環境變數
+    std::map<std::string, std::string> env;
+    // 載入環境變數
+    load_env(env);
     MYSQL *conn;
-    const char *server = "database";
-    const char *user = "root";
-    const char *password = "rootpassword";
-    const char *database = "database_name";
+    const char *server = env["DATABASE_HOST"].c_str();
+    const char *user = env["DATABASE_USER"].c_str();
+    const char *password = env["DATABASE_PASSWORD"].c_str();
+    const char *database = env["DATABASE_NAME"].c_str();
 
     conn = mysql_init(NULL);
     if (!mysql_real_connect(conn, server, user, password, database, 0, NULL, 0)) {
