@@ -38,7 +38,6 @@ std::string get_ip_address() {
     return "0.0.0.0";
 }
 
-
 // 執行 SQL 查詢 需傳入參數有 MYSQL 連接和 SQL 查詢語句
 bool execute_query(MYSQL* conn, const std::string& query) {
     // 如果查詢執行失敗，則輸出錯誤信息並回傳 false
@@ -112,17 +111,12 @@ bool insert_user(MYSQL* conn, const std::string& username, const std::string& pa
     // 執行 SQL 插入語句
     return execute_query(conn, query);
 }
-// 插入訊息 需傳入參數有 MYSQL 連接、使用者名稱和訊息
-bool insert_message(MYSQL* conn, const std::string& username, const std::string& message) {
-    // SQL 插入語句
-    std::string insert_query = "INSERT INTO messages (username, message) VALUES ('" + username + "', '" + message + "');";
-    // 執行 SQL 插入語句
-    return execute_query(conn, insert_query);
-}
 // 處理客戶端 需傳入參數有客戶端的 socket 和 MYSQL 連接
 void handle_client(tcp::socket socket, MYSQL* conn) {
     // 使用 std::lock_guard 來鎖定 clients_mutex
-    // 為了確保對客戶端集合的操作是線程安全，多個執行緒可能同時訪問或修改這個集合，鎖定 clients_mutex 使得在操作集合時只有一個執行緒能夠進行，防止資料競爭和不一致的狀態
+    // 為了確保對客戶端集合的操作是線程安全，多個執行緒可能同時訪問或修改這個集合，鎖定
+    // clients_mutex
+    // 使得在操作集合時只有一個執行緒能夠進行，防止資料競爭和不一致的狀態
     {
         std::lock_guard<std::mutex> lock(clients_mutex);
         clients.insert(&socket);
@@ -132,7 +126,8 @@ void handle_client(tcp::socket socket, MYSQL* conn) {
         while (true) {
             // 使用 boost::asio::streambuf 類別來讀取客戶端發送的訊息
             boost::asio::streambuf buf;
-            // 使用 boost::asio::read_until() 函數讀取客戶端發送的訊息直到遇到換行符
+            // 使用 boost::asio::read_until()
+            // 函數讀取客戶端發送的訊息直到遇到換行符
             boost::asio::read_until(socket, buf, "\n");
             // 使用 std::istream 類別來讀取 boost::asio::streambuf 中的數據
             std::istream input_stream(&buf);
@@ -163,7 +158,7 @@ void handle_client(tcp::socket socket, MYSQL* conn) {
                         std::cerr << "Error inserting user into database\n";
                     }
                 }
-            // 如果type為login，則處理登入請求
+                // 如果type為login，則處理登入請求
             } else if (type == "login") {
                 // 獲取 JSON 物件中的 username 和 password 屬性
                 std::string username = message_json["username"];
@@ -183,8 +178,8 @@ void handle_client(tcp::socket socket, MYSQL* conn) {
                     std::string response = "帳號或密碼錯誤!\n";
                     boost::asio::write(socket, boost::asio::buffer(response));
                 }
-            // 如果type為message，則處理訊息
-            }else if (type == "message"){
+                // 如果type為message，則處理訊息
+            } else if (type == "message") {
                 std::cout << "message received" << std::endl;
             }
         }
@@ -201,23 +196,23 @@ void handle_client(tcp::socket socket, MYSQL* conn) {
     socket.close();
 }
 
-
-// 使用 map 來存儲環境變數 key 和 value 使用 map 是因為 map 會自動按照鍵的順序進行排序也允許動態添加和刪除元素，不需要預先定義大小。
-void load_env(std::map<std::string, std::string> &env)
-{
+// 使用 map 來存儲環境變數 key 和 value 使用 map 是因為 map
+// 會自動按照鍵的順序進行排序也允許動態添加和刪除元素，不需要預先定義大小。
+void load_env(std::map<std::string, std::string>& env) {
     // 打開 .env 文件
     std::ifstream file(".env");
     // 宣告一個字串變數來存儲每一行的數據
     std::string line;
     // 使用 while 迴圈遍歷文件中的每一行
-    while (std::getline(file, line))
-    {
-        // 使用size_t類型的pos變數來存儲等號的位置 size_t 是一個無符號整數類型，通常用來表示大小或者長度如果沒有找到等號，則返回特殊常數 std::string::npos，表示該字符未找到。
+    while (std::getline(file, line)) {
+        // 使用size_t類型的pos變數來存儲等號的位置 size_t
+        // 是一個無符號整數類型，通常用來表示大小或者長度如果沒有找到等號，則返回特殊常數
+        // std::string::npos，表示該字符未找到。
         size_t pos = line.find('=');
         // 如果找到等號
-        if (pos != std::string::npos)
-        {
-            // 使用 substr() 函數來截取字符串 substr() 函數的第一個參數是截取的起始位置，第二個參數是截取的長度如果以DATABASE_HOST=database來看，就是從0開始截取到等號的位置
+        if (pos != std::string::npos) {
+            // 使用 substr() 函數來截取字符串 substr()
+            // 函數的第一個參數是截取的起始位置，第二個參數是截取的長度如果以DATABASE_HOST=database來看，就是從0開始截取到等號的位置
             std::string key = line.substr(0, pos);
             // pos + 1 表示從等號的下一個位置開始截取
             std::string value = line.substr(pos + 1);
@@ -226,8 +221,7 @@ void load_env(std::map<std::string, std::string> &env)
         }
     }
 }
-int main()
-{
+int main() {
     const std::string GREEN = "\033[32m";
     const std::string RED = "\033[31m";
     const std::string RESET = "\033[0m";
@@ -235,11 +229,11 @@ int main()
     std::map<std::string, std::string> env;
     // 載入環境變數
     load_env(env);
-    MYSQL *conn;
-    const char *server = env["DATABASE_HOST"].c_str();
-    const char *user = env["DATABASE_USER"].c_str();
-    const char *password = env["DATABASE_PASSWORD"].c_str();
-    const char *database = env["DATABASE_NAME"].c_str();
+    MYSQL* conn;
+    const char* server = env["DATABASE_HOST"].c_str();
+    const char* user = env["DATABASE_USER"].c_str();
+    const char* password = env["DATABASE_PASSWORD"].c_str();
+    const char* database = env["DATABASE_NAME"].c_str();
 
     conn = mysql_init(NULL);
     if (!mysql_real_connect(conn, server, user, password, database, 0, NULL, 0)) {
@@ -253,19 +247,22 @@ int main()
         std::cerr << "Error: " << mysql_error(conn) << std::endl;
         return 1;
     } else {
-        MYSQL_RES *res = mysql_store_result(conn);
+        MYSQL_RES* res = mysql_store_result(conn);
         if (res == NULL) {
             std::cerr << RED << "Error: " << mysql_error(conn) << RESET << std::endl;
             return 1;
         }
         if (mysql_num_rows(res) == 0) {
-            std::string create_account_query = "CREATE TABLE IF NOT EXISTS users (id INT PRIMARY KEY AUTO_INCREMENT, username VARCHAR(255), password VARCHAR(255));";
+            std::string create_account_query =
+                "CREATE TABLE IF NOT EXISTS users (id INT PRIMARY KEY "
+                "AUTO_INCREMENT, username VARCHAR(255), password "
+                "VARCHAR(255));";
             if (mysql_query(conn, create_account_query.c_str())) {
                 std::cerr << RED << "Error: " << mysql_error(conn) << RESET << std::endl;
                 mysql_free_result(res);
                 return 1;
             } else {
-                std::cout << GREEN << "Users table created successfully!"<< RESET << std::endl;
+                std::cout << GREEN << "Users table created successfully!" << RESET << std::endl;
             }
         } else {
             std::cout << GREEN << "Users table already exists!" << RESET << std::endl;
@@ -277,19 +274,22 @@ int main()
         std::cerr << "Error: " << mysql_error(conn) << std::endl;
         return 1;
     } else {
-        MYSQL_RES *res = mysql_store_result(conn);
+        MYSQL_RES* res = mysql_store_result(conn);
         if (res == NULL) {
             std::cerr << RED << "Error: " << mysql_error(conn) << RESET << std::endl;
             return 1;
         }
         if (mysql_num_rows(res) == 0) {
-            std::string create_message_query = "CREATE TABLE IF NOT EXISTS messages (id INT PRIMARY KEY AUTO_INCREMENT, username VARCHAR(255), message TEXT, ip VARCHAR(45), timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP);";
+            std::string create_message_query =
+                "CREATE TABLE IF NOT EXISTS messages (id INT PRIMARY KEY "
+                "AUTO_INCREMENT, username VARCHAR(255), message TEXT, ip "
+                "VARCHAR(45), timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP);";
             if (mysql_query(conn, create_message_query.c_str())) {
                 std::cerr << RED << "Error: " << mysql_error(conn) << RESET << std::endl;
                 mysql_free_result(res);
                 return 1;
             } else {
-                std::cout << GREEN << "Messages table created successfully!"<< RESET << std::endl;
+                std::cout << GREEN << "Messages table created successfully!" << RESET << std::endl;
             }
         } else {
             std::cout << GREEN << "Messages table already exists!" << RESET << std::endl;
